@@ -1,0 +1,71 @@
+# Our own additions
+testing_logs/
+not_tracked/
+*.egg-info
+*.egg-info/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Notebook scratch
+check.ipynb
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+plots/
+.claude/
+
+# PyCharm & VSCode
+.idea/
+.vscode/
+
+# Hugging Face cache (optional)
+~/.cache/huggingface/
+huggingface_cache/
+hf_cache/
+
+# SLURM job outputs (if not wanted in version control)
+slurm-*.out
+**/slurm/
+*.sbatch
+
+# Datasets or large experiment files
+slurm/
+checkpoints/
+*.pt
+*.bin
+*.ckpt
+
+# Environment
+.env
+.env.*
+
+# Mac/Unix OS junk
+.DS_Store
+Thumbs.db
+
+# LLM cache
+caches/
+outputs/
+logs/
+data/benchmark_cache/
+sbatch-logs/
+figures/
+test/
+wandb/
+
+.venv311/
+.venv310/
+.venv312/
+
+CHANGELOG.md
+data/

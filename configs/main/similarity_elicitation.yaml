@@ -1,0 +1,12 @@
+name: "Similarity Elicitation"
+
+# Component references (relative to configs/)
+game_config: games/prisoners_dilemma_custom.yaml
+agents_config: agents/two_models.yaml
+
+# Similarity framing configuration
+similarity:
+  similarity_pct: 70
+  prompt_mode: "percentage_updated"
+  # domain: "risk tolerance"  # only used when prompt_mode is "domain"
+  # custom_prompt: ""         # only used when prompt_mode is "custom"

@@ -1,0 +1,15 @@
+- llm:
+    provider: OpenRouter
+    model: google/gemini-3-flash-preview
+    kwargs:
+      temperature: 1
+  type: CoTAgent
+  player_id: 1
+
+- llm:
+    provider: OpenRouter
+    model: openai/gpt-oss-120b
+    kwargs:
+      temperature: 1
+  type: CoTAgent
+  player_id: 2

@@ -1,0 +1,22 @@
+# TestInstance agents (no API calls)
+- llm:
+    provider: OpenRouter
+    model: google/gemini-3.1-flash-lite-preview
+    kwargs:
+      temperature: 1
+  type: CoTAgent
+
+- llm:
+    provider: OpenRouter
+    model: openai/gpt-oss-120b
+    kwargs:
+      temperature: 1
+  type: CoTAgent
+
+- llm:
+    provider: OpenRouter
+    model: google/gemini-3-flash-preview
+    # model: qwen/qwen3-235b-a22b-2507
+    kwargs:
+      temperature: 1
+  type: CoTAgent

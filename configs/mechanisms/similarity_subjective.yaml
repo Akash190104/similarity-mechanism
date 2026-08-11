@@ -1,0 +1,10 @@
+type: Similarity
+kwargs:
+  similarity_source: "subjective"
+  benchmark: "newcomb"
+  benchmark_kwargs:
+    store_traces: true
+  subjective_mode: "decision"
+  subjective_chunk_size: 10
+  prompt_mode: "percentage_updated"
+  num_rounds: 1

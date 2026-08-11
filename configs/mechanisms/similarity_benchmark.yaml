@@ -1,0 +1,8 @@
+type: Similarity
+kwargs:
+  similarity_source: "benchmark"
+  benchmark: "newcomb"
+  benchmark_kwargs:
+    max_items: 20
+  prompt_mode: "percentage_updated"
+  num_rounds: 1

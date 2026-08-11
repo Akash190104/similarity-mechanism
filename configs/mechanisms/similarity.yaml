@@ -1,0 +1,6 @@
+type: Similarity
+kwargs:
+  similarity_source: "fixed"
+  similarity_pct: 70
+  prompt_mode: "percentage_updated"
+  num_rounds: 1

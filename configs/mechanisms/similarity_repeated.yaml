@@ -1,0 +1,6 @@
+type: Similarity
+kwargs:
+  similarity_pct: 70
+  prompt_mode: "percentage"
+  num_rounds: 15
+  discount: 0.8

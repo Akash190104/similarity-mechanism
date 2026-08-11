@@ -1,0 +1,14 @@
+# Two models for Travellers Dilemma
+- llm:
+    provider: OpenRouter
+    model: google/gemini-3-flash-preview
+    kwargs:
+      temperature: 1
+  type: CoTAgent
+
+- llm:
+    provider: OpenRouter
+    model: openai/gpt-oss-120b
+    kwargs:
+      temperature: 1
+  type: CoTAgent

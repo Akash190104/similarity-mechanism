@@ -1,0 +1,8 @@
+type: Similarity
+kwargs:
+  similarity_source: "benchmark_sweep"
+  benchmarks: ["newcomb", "gpqa", "cabin"]
+  prompt_mode: "percentage_updated"
+  increment: 10
+  trials_per_level: 1
+  num_rounds: 1

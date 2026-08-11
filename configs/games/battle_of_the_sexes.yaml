@@ -1,0 +1,7 @@
+type: BattleOfTheSexes
+kwargs:
+  payoff_matrix:
+    OO: [3, 2]
+    OF: [0, 0]
+    FO: [0, 0]
+    FF: [2, 3]

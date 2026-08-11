@@ -1,0 +1,10 @@
+name: "Subjective Similarity (Decision-Based) on Prisoners Dilemma"
+
+game_config: games/prisoners_dilemma.yaml
+mechanism_config: mechanisms/similarity_subjective.yaml
+agents_config: agents/two_models.yaml
+evaluation_config: evaluation/default_evaluation.yaml
+
+concurrency:
+  max_workers: 3
+  tournament_workers: 8

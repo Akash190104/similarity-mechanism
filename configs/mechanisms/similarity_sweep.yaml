@@ -1,0 +1,7 @@
+type: Similarity
+kwargs:
+  similarity_source: "sweep"
+  prompt_mode: "percentage_updated"
+  increment: 10
+  trials_per_level: 10
+  num_rounds: 1

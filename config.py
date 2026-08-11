@@ -1,0 +1,21 @@
+from pathlib import Path
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+PROJECT_DIR = Path(__file__).resolve().parent
+OUTPUTS_DIR = PROJECT_DIR / "outputs"
+FIGURE_DIR = PROJECT_DIR / "figures"
+CONFIG_DIR = PROJECT_DIR / "configs"
+MODEL_WEIGHTS_DIR = Path("/model-weights")
+CACHE_DIR = PROJECT_DIR / "caches"
+DATA_DIR = PROJECT_DIR / "data"
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=PROJECT_DIR / ".env")
+    OPENAI_API_KEY: str | None = None
+    GEMINI_API_KEY: str | None = None
+    OPENROUTER_API_KEY: str
+
+
+settings = Settings()  # type: ignore

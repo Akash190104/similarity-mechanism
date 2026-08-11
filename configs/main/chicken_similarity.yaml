@@ -1,0 +1,12 @@
+name: "Chicken Game Similarity Tournament"
+
+# Component references (relative to configs/)
+game_config: games/chicken.yaml
+mechanism_config: mechanisms/similarity.yaml
+agents_config: agents/two_models.yaml
+evaluation_config: evaluation/default_evaluation.yaml
+
+# Experiment-level settings
+concurrency:
+  max_workers: 10
+  tournament_workers: 8

@@ -1,0 +1,4 @@
+type: Similarity
+kwargs:
+  prompt_mode: "vague"
+  num_rounds: 1

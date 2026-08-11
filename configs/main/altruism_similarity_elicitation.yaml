@@ -1,0 +1,14 @@
+name: "Altruism Similarity Elicitation - Maximize Utility"
+
+# Component references (relative to configs/)
+game_config: games/prisoners_dilemma_custom.yaml
+agents_config: agents/cheap_llms_3.yaml
+
+# Similarity framing configuration
+similarity:
+  similarity_pct: 70
+  prompt_mode: "percentage"
+
+# Concurrency settings for faster execution
+concurrency:
+  max_workers: 10

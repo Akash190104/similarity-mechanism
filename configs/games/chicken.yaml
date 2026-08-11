@@ -1,0 +1,7 @@
+type: Chicken
+kwargs:
+  payoff_matrix:
+      SS: [0, 0]
+      SD: [-1, 1]
+      DS: [1, -1]
+      DD: [-10, -10]

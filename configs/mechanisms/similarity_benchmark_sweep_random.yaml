@@ -1,0 +1,18 @@
+type: Similarity
+kwargs:
+  similarity_source: "benchmark_sweep"
+  benchmarks:
+    - newcomb
+    - dilemmas
+    - moral_choice
+    - cabin
+    - ggb
+    - trait
+    - hle
+    - random_coin_toss_alt
+    - random_die_roll_alt
+    - similarity_game
+  prompt_mode: "percentage_updated"
+  increment: 10
+  trials_per_level: 10
+  num_rounds: 1

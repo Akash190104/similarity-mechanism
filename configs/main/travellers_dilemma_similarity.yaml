@@ -1,0 +1,14 @@
+name: "Travellers Dilemma - Similarity Sweep"
+
+# Component references (relative to configs/)
+game_config: games/travellers_dilemma.yaml
+agents_config: agents/two_models.yaml
+
+# Similarity framing configuration
+similarity:
+  similarity_pct: 70
+  prompt_mode: "percentage_updated"
+
+# Concurrency settings for faster execution
+concurrency:
+  max_workers: 10

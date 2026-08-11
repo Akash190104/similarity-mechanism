@@ -1,0 +1,10 @@
+name: "Benchmark Sweep — Spoofed Similarity 0-100% × All Benchmarks"
+
+game_config: games/prisoners_dilemma.yaml
+mechanism_config: mechanisms/similarity_benchmark_sweep_random.yaml
+agents_config: agents/gemini_vs_gpt.yaml
+evaluation_config: evaluation/no_evaluation.yaml
+
+concurrency:
+  max_workers: 30
+  tournament_workers: 30

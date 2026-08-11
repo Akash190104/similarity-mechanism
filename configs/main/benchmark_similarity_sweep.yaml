@@ -1,0 +1,16 @@
+name: "Spoofed Benchmark Similarity Sweep"
+
+# Component references (relative to configs/)
+game_config: games/prisoners_dilemma.yaml
+agents_config: agents/two_models.yaml
+
+# Similarity framing configuration (overridden per benchmark by the script)
+similarity:
+  similarity_pct: 50
+  prompt_mode: "custom"
+  custom_prompt: ""
+
+# Concurrency settings
+concurrency:
+  max_workers: 25
+  tournament_workers: 25

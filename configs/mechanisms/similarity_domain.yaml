@@ -1,0 +1,6 @@
+type: Similarity
+kwargs:
+  similarity_pct: 70
+  prompt_mode: "domain"
+  domain: "risk tolerance"
+  num_rounds: 1

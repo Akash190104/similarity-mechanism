@@ -1,0 +1,7 @@
+type: PrisonersDilemma
+kwargs:
+  payoff_matrix:
+      CC: [10, 10]
+      CD: [0, 11]
+      DC: [11, 0]
+      DD: [1, 1]
