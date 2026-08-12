@@ -1,16 +1,15 @@
-# Similarity Mechanism for Coop Eval
+# Do LLMs Take Care of Their Own? Similarity Signals Can Induce Cooperation
 
 ![Similarity-based cooperation: agents are shown a similarity score derived from benchmark responses before playing the base game](assets/overview.png)
 
-This repository is the code base to the paper "Do LLMs Take Care of Their Own? Similarity Signals Can Induce Cooperation" and it started as a fork of **Coop Eval** (a framework for studying cooperation between LLM agents in game-theoretic settings) with a new **similarity mechanism**. The core research question: *does telling LLM agents they are similar to their opponent change how they cooperate?*
+Code for the paper *"Do LLMs Take Care of Their Own? Similarity Signals Can Induce Cooperation"*. The core research question: *does telling LLM agents they are similar to their opponent change how they cooperate?*
 
-We add:
-- A **Similarity mechanism** with multiple ways to source and communicate similarity (fixed, sweep, benchmark-based, subjective)
+Before agents play a game, each is told something about how similar its opponent is. That signal can be a fixed number, swept across a range, computed from how the two agents actually answered a benchmark, or judged by the agents themselves. This repository provides:
+
+- A **similarity mechanism** with multiple ways to source and communicate similarity (fixed, sweep, benchmark-based, subjective)
 - A **benchmark system** for computing pairwise agent similarity from questionnaire responses
 - A **similarity elicitation** pipeline that measures how agent strategies shift as told similarity varies
 - A new game: **Chicken** (Hawk-Dove)
-
-Everything else (the game abstractions, agent wrappers, and the other mechanisms and evaluation methods that ship with the framework but are not used here) comes from the original Coop Eval framework.
 
 ---
 
@@ -35,6 +34,7 @@ Everything else (the game abstractions, agent wrappers, and the other mechanisms
 - [Output Format](#output-format)
 - [Running with Inspect AI](#running-with-inspect-ai)
 - [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
 
 ---
 
@@ -240,7 +240,7 @@ python script/run_similarity_tournament.py --config configs/main/similarity_test
 
 ## New Game
 
-One game was added to the Coop Eval framework for this work:
+One game was added to the [Coop Eval](https://github.com/Xiao215/CoopEval) framework for this work:
 
 ### Chicken (Hawk-Dove)
 
@@ -390,7 +390,7 @@ See [The Similarity Mechanism](#the-similarity-mechanism) for the similarity con
 |-------|---------------|---------|
 | `Similarity` | `Similarity` | Tells agents about opponent similarity; multiple sources and framings |
 
-Coop Eval's other mechanisms (reputation, mediation, disarmament, contracting, repetition) remain in the tree and are documented upstream; they are not used in this work.
+[Coop Eval](https://github.com/Xiao215/CoopEval)'s other mechanisms (reputation, mediation, disarmament, contracting, repetition) remain in the tree and are documented upstream; they are not used in this work.
 
 ---
 
@@ -608,4 +608,10 @@ This repository is focused on the similarity mechanism, so the most useful contr
 - **Add a similarity source**: a new `similarity_source` branch in `src/mechanisms/similarity.py`, for a different way of deriving the number the agents are told.
 - **Report a result that does not replicate**: cooperation under similarity framing is sensitive to model, payoff scale, and prompt wording. Runs that disagree with ours are useful; please include the config and the model versions.
 
-If instead you have a **new game or a new mechanism** that is not specific to similarity, it belongs upstream in [Coop Eval](https://github.com/Akash190104/CoopEval) rather than here, since that is where the game abstractions, the mechanism interface, and the other mechanisms live, and a contribution there benefits every mechanism built on top of it, this one included.
+If instead you have a **new game or a new mechanism** that is not specific to similarity, it belongs upstream in [Coop Eval](https://github.com/Xiao215/CoopEval) rather than here, since that is where the game abstractions, the mechanism interface, and the other mechanisms live, and a contribution there benefits every mechanism built on top of it, this one included.
+
+---
+
+## Acknowledgements
+
+This work is built on [Coop Eval](https://github.com/Xiao215/CoopEval), a framework for studying cooperation between LLM agents in game-theoretic settings. The game abstractions, the agent wrappers, and the mechanisms and evaluation methods not used here come from that project, and the similarity mechanism is implemented against its interfaces.
