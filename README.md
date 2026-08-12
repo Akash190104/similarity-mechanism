@@ -1,6 +1,8 @@
 # Similarity Mechanism for Coop Eval
 
-This repository is the code base to the paper "Do LLMs Take Care of Their Own? Similarity Signals Can Induce Cooperation" and it started as a fork of **Coop Eval** — a framework for studying cooperation between LLM agents in game-theoretic settings — with a new **similarity mechanism**. The core research question: *does telling LLM agents they are similar to their opponent change how they cooperate?*
+![Similarity-based cooperation: agents are shown a similarity score derived from benchmark responses before playing the base game](assets/overview.png)
+
+This repository is the code base to the paper "Do LLMs Take Care of Their Own? Similarity Signals Can Induce Cooperation" and it started as a fork of **Coop Eval** (a framework for studying cooperation between LLM agents in game-theoretic settings) with a new **similarity mechanism**. The core research question: *does telling LLM agents they are similar to their opponent change how they cooperate?*
 
 We add:
 - A **Similarity mechanism** with multiple ways to source and communicate similarity (fixed, sweep, benchmark-based, subjective)
@@ -8,7 +10,7 @@ We add:
 - A **similarity elicitation** pipeline that measures how agent strategies shift as told similarity varies
 - A new game: **Chicken** (Hawk-Dove)
 
-Everything else — the game abstractions, agent wrappers, and the other mechanisms and evaluation methods that ship with the framework but are not used here — comes from the original Coop Eval framework.
+Everything else (the game abstractions, agent wrappers, and the other mechanisms and evaluation methods that ship with the framework but are not used here) comes from the original Coop Eval framework.
 
 ---
 
@@ -69,7 +71,7 @@ python script/run_experiment.py --config configs/main/similarity_testing.yaml --
 ./submit.sh          # wraps sbatch and uses run_job.sh under the hood
 ```
 
-`run_job.sh` and `interactive.sh` ship with placeholders (`<your-slurm-account>`, `/path/to/your/checkout`) — fill in your account, working directory, GPU type, and walltime before submitting. Logs are written to `sbatch-logs/<year>/<month>/<day>/`.
+`run_job.sh` and `interactive.sh` ship with placeholders (`<your-slurm-account>`, `/path/to/your/checkout`); fill in your account, working directory, GPU type, and walltime before submitting. Logs are written to `sbatch-logs/<year>/<month>/<day>/`.
 
 ---
 
@@ -99,7 +101,7 @@ The `prompt_mode` kwarg controls how similarity is communicated to agents:
 | `percentage` | Simple "X% similar" statement |
 | `domain` | Domain-specific similarity (e.g., "risk tolerance") via `domain` kwarg |
 | `vague` | Non-specific ("you are playing an opponent that has some similarity to you") |
-| `construct` | States that a similarity score has been computed (on a 0–1 scale) but is not available for display — isolates the construct from any particular number |
+| `construct` | States that a similarity score has been computed (on a 0–1 scale) but is not available for display; isolates the construct from any particular number |
 | `custom` | Free-form text with `{similarity_pct}` placeholder |
 
 All percentage-based modes are additionally parameterised by `difference_framing`, which flips both the wording and the number: `False`/`"similar"` shows the raw percentage as "X% similar to"; `True`/`"different"` and `"dissimilar"` show `100 − X` as "X% different from" / "X% dissimilar to". `vague` and `construct` carry no percentage, so `difference_framing` does not affect them.
@@ -171,32 +173,32 @@ Benchmarks (`benchmarks/`) measure agent characteristics and compute pairwise si
 | Key | Name | Format | Items | Similarity Metric | Used here |
 |-----|------|--------|-------|-------------------|-----------|
 | `newcomb` | Newcomb-like Decision Theory | MCQ (variable options, shuffled) | 537 | Raw answer agreement | **yes** |
-| `gpqa` | GPQA Diamond | 4-option MCQ (shuffled) | 198 | Cohen's kappa | — |
+| `gpqa` | GPQA Diamond | 4-option MCQ (shuffled) | 198 | Cohen's kappa | no |
 | `hle` | Humanity's Last Exam | MCQ or short free-text answer | 2,158 | Raw answer agreement | **yes** |
 | `dilemmas` | Daily Dilemmas | Binary choice (shuffled) | 1,360 | Raw answer agreement | collected only |
 | `moral_choice` | MoralChoice | Binary choice (shuffled) | 1,367 | Raw answer agreement | **yes** |
-| `multi_tp` | MultiTP Trolley Problems | Binary choice (shuffled) | 460 | Cohen's kappa | — |
+| `multi_tp` | MultiTP Trolley Problems | Binary choice (shuffled) | 460 | Cohen's kappa | no |
 | `cabin` | CABIN Career Interest | 5-point Likert (Dislike → Like Very Much) | 164 | Quadratic Weighted Kappa | collected only |
 | `ggb` | Greatest Good Benchmark | 7-point Likert (Strongly Disagree → Strongly Agree) | 90 | Quadratic Weighted Kappa | collected only |
 | `trait` | TRAIT Personality | 4-option MCQ (shuffled) | 8,000 | Raw answer agreement | **yes** |
-| `random_coin_toss` | Random Coin Toss | Comma-separated H/T sequence | 100 | Raw positional agreement | — |
-| `random_coin_toss_alt` | Random Coin Toss (alt phrasing) | Comma-separated H/T sequence | 100 | Raw positional agreement | — |
-| `random_die_roll` | Random Die Roll | Comma-separated 1–6 sequence | 100 | Raw positional agreement | — |
-| `random_die_roll_alt` | Random Die Roll (alt phrasing) | Comma-separated 1–6 sequence | 100 | Raw positional agreement | — |
+| `random_coin_toss` | Random Coin Toss | Comma-separated H/T sequence | 100 | Raw positional agreement | no |
+| `random_coin_toss_alt` | Random Coin Toss (alt phrasing) | Comma-separated H/T sequence | 100 | Raw positional agreement | no |
+| `random_die_roll` | Random Die Roll | Comma-separated 1–6 sequence | 100 | Raw positional agreement | no |
+| `random_die_roll_alt` | Random Die Roll (alt phrasing) | Comma-separated 1–6 sequence | 100 | Raw positional agreement | no |
 | `similarity_game` | Similarity Game | Mixed-strategy probability distributions | per config | Chance-corrected Jensen–Shannon divergence | collected only |
 
 Item counts are the full benchmark size; `max_items` subsamples them (see [Stratified Sampling](#stratified-sampling)).
 
-**Used here** records what this work actually ran. The four marked **yes** (`newcomb`, `trait`, `moral_choice`, `hle`) are the benchmarks behind the reported exogenous-similarity results; `cabin`, `ggb`, `dilemmas`, and `similarity_game` were collected but not carried into the game tournaments. The remainder are implemented and registered but were not run, so their metrics are untested in our setting — in particular **no reported result uses Cohen's kappa**.
+**Used here** records what this work actually ran. The four marked **yes** (`newcomb`, `trait`, `moral_choice`, `hle`) are the benchmarks behind the reported exogenous-similarity results; `cabin`, `ggb`, `dilemmas`, and `similarity_game` were collected but not carried into the game tournaments. The remainder are implemented and registered but were not run, so their metrics are untested in our setting. In particular, **no reported result uses Cohen's kappa**.
 
 **What the metrics mean**
 
-- **Raw answer agreement** — the fraction of commonly-answered questions where both agents gave the same answer, ×100. No chance correction, so two agents that both follow a strong majority pattern score high.
-- **Cohen's kappa** — agreement corrected for the agreement expected from each agent's own answer marginals: `κ = (p_o − p_e) / (1 − p_e)`, rescaled to `[0, 100]` via `(κ + 1) / 2 × 100`. 50 ≈ chance.
-- **Quadratic Weighted Kappa (QWK)** — the ordinal analogue used for Likert scales, penalising disagreements by the *square* of the rating gap: `score = (1 − ½ · D_obs / D_exp) × 100`, where `D_obs` is the mean squared paired difference and `D_exp` the same under independent marginals. 100 = identical, 50 ≈ chance, 0 = maximal anti-correlation.
-- **Chance-corrected JSD** — for the similarity game, the Jensen–Shannon divergence between the two agents' action distributions at matched similarity levels, normalised against a cross-level independence baseline: `κ = 1 − JSD_obs / JSD_exp`, rescaled the same way.
+- **Raw answer agreement**: the fraction of commonly-answered questions where both agents gave the same answer, ×100. No chance correction, so two agents that both follow a strong majority pattern score high.
+- **Cohen's kappa**: agreement corrected for the agreement expected from each agent's own answer marginals: `κ = (p_o − p_e) / (1 − p_e)`, rescaled to `[0, 100]` via `(κ + 1) / 2 × 100`. 50 ≈ chance.
+- **Quadratic Weighted Kappa (QWK)**: the ordinal analogue used for Likert scales, penalising disagreements by the *square* of the rating gap: `score = (1 − ½ · D_obs / D_exp) × 100`, where `D_obs` is the mean squared paired difference and `D_exp` the same under independent marginals. 100 = identical, 50 ≈ chance, 0 = maximal anti-correlation.
+- **Chance-corrected JSD**: for the similarity game, the Jensen–Shannon divergence between the two agents' action distributions at matched similarity levels, normalised against a cross-level independence baseline: `κ = 1 − JSD_obs / JSD_exp`, rescaled the same way.
 
-The LLM judge (`benchmarks/llm_judge.py`) is used for the *endogenous* similarity path (`similarity_source: "subjective"`), where each agent rates the other's responses — not for benchmark scoring, which is always one of the four metrics above.
+The LLM judge (`benchmarks/llm_judge.py`) is used for the *endogenous* similarity path (`similarity_source: "subjective"`), where each agent rates the other's responses, not for benchmark scoring, which is always one of the four metrics above.
 
 ### Stratified Sampling
 
@@ -220,7 +222,7 @@ python script/run_benchmarks.py --agents configs/agents/two_models.yaml \
 
 ## Similarity Elicitation
 
-The similarity elicitation pipeline (`src/mechanisms/similarity_elicitation.py`) measures how an agent's strategy distribution shifts as the told similarity changes. It does not run an actual game — it only prompts agents for their mixed strategy at each similarity level.
+The similarity elicitation pipeline (`src/mechanisms/similarity_elicitation.py`) measures how an agent's strategy distribution shifts as the told similarity changes. It does not run an actual game; it only prompts agents for their mixed strategy at each similarity level.
 
 This is used by:
 - The **similarity game benchmark** to compute Jensen-Shannon divergence between agents
@@ -257,9 +259,9 @@ Two players simultaneously choose **Swerve** (safe) or **Dare**. If both dare, b
 
 | Script | Purpose |
 |--------|---------|
-| `script/run_experiment.py` | Main entry point — loads a `configs/main/*.yaml` and runs mechanism tournament + evaluations |
+| `script/run_experiment.py` | Main entry point: loads a `configs/main/*.yaml` and runs mechanism tournament + evaluations |
 | `script/run_similarity_sweep.py` | Sweep similarity from 0% to 100% and record cooperation at each level |
-| `script/run_benchmark_sweep.py` | Spoofed benchmark sweep — tell agents fake similarity scores per benchmark |
+| `script/run_benchmark_sweep.py` | Spoofed benchmark sweep: tell agents fake similarity scores per benchmark |
 | `script/run_similarity_tournament.py` | 3-phase: elicit strategies, compute pairwise similarity, play at computed level |
 | `script/run_elicitation.py` | Solo/pairwise strategy elicitation under similarity framing |
 | `script/run_elicitation_sweep.py` | Single-agent elicitation across similarity levels with auto-plot |
@@ -477,7 +479,7 @@ Each experiment run produces a timestamped directory under `outputs/<year>/<mont
 
 ## Running with Inspect AI
 
-The project can also be run through [Inspect AI](https://inspect.aisi.org.uk/), the UK AI Safety Institute's evaluation framework. This gives you Inspect's model abstraction (unified access to OpenAI, Anthropic, Google, HuggingFace, OpenRouter), structured logging, and the `inspect view` web dashboard — while all existing game, mechanism, and benchmark logic runs unchanged.
+The project can also be run through [Inspect AI](https://inspect.aisi.org.uk/), the UK AI Safety Institute's evaluation framework. This gives you Inspect's model abstraction (unified access to OpenAI, Anthropic, Google, HuggingFace, OpenRouter), structured logging, and the `inspect view` web dashboard, while all existing game, mechanism, and benchmark logic runs unchanged.
 
 ### Setup
 
@@ -574,7 +576,7 @@ matrix = load_similarity_matrix("logs/2026-04-08T.../eval.json")
 
 ### How it works
 
-The Inspect integration is a thin wrapper — it does **not** rewrite any game, mechanism, or benchmark logic. Instead:
+The Inspect integration is a thin wrapper; it does **not** rewrite any game, mechanism, or benchmark logic. Instead:
 
 1. **`InspectAgent`** (`inspect_similarity/agents/inspect_agent.py`) subclasses the existing `Agent` ABC but routes LLM calls through Inspect's `Model.generate()` instead of the custom `ClientAPILLM` stack.
 2. **Inspect tasks** (`inspect_similarity/tasks/`) are thin entry points that create `InspectAgent` instances and call the existing pipeline functions (`mechanism.run_tournament()`, `benchmark.run()`, `elicitation.elicit_single()`, etc.).
@@ -601,9 +603,9 @@ inspect_similarity/
 
 This repository is focused on the similarity mechanism, so the most useful contributions are ones that extend it:
 
-- **Add a benchmark** — the main lever for exogenous similarity. Subclass `Benchmark` in `benchmarks/`, implement `run()` and `compute_similarity()`, and register it in `benchmarks/registry.py`. A benchmark is only as useful as its similarity metric, so state plainly what `compute_similarity` returns and whether it is chance-corrected.
-- **Add a similarity framing** — a new `prompt_mode` in `src/mechanisms/prompts.py`, dispatched from `similarity_utils.py`. Please add the exact wording to [`SIMILARITY_PROMPTS_V2.md`](SIMILARITY_PROMPTS_V2.md) in the same format as the existing entries, since that file is the reference for what agents actually saw.
-- **Add a similarity source** — a new `similarity_source` branch in `src/mechanisms/similarity.py`, for a different way of deriving the number the agents are told.
-- **Report a result that does not replicate** — cooperation under similarity framing is sensitive to model, payoff scale, and prompt wording. Runs that disagree with ours are useful; please include the config and the model versions.
+- **Add a benchmark**: the main lever for exogenous similarity. Subclass `Benchmark` in `benchmarks/`, implement `run()` and `compute_similarity()`, and register it in `benchmarks/registry.py`. A benchmark is only as useful as its similarity metric, so state plainly what `compute_similarity` returns and whether it is chance-corrected.
+- **Add a similarity framing**: a new `prompt_mode` in `src/mechanisms/prompts.py`, dispatched from `similarity_utils.py`. Please add the exact wording to [`SIMILARITY_PROMPTS_V2.md`](SIMILARITY_PROMPTS_V2.md) in the same format as the existing entries, since that file is the reference for what agents actually saw.
+- **Add a similarity source**: a new `similarity_source` branch in `src/mechanisms/similarity.py`, for a different way of deriving the number the agents are told.
+- **Report a result that does not replicate**: cooperation under similarity framing is sensitive to model, payoff scale, and prompt wording. Runs that disagree with ours are useful; please include the config and the model versions.
 
-If instead you have a **new game or a new mechanism** that is not specific to similarity, it belongs upstream in [Coop Eval](https://github.com/Akash190104/CoopEval) rather than here — that is where the game abstractions, the mechanism interface, and the other mechanisms live, and a contribution there benefits every mechanism built on top of it, this one included.
+If instead you have a **new game or a new mechanism** that is not specific to similarity, it belongs upstream in [Coop Eval](https://github.com/Akash190104/CoopEval) rather than here, since that is where the game abstractions, the mechanism interface, and the other mechanisms live, and a contribution there benefits every mechanism built on top of it, this one included.
