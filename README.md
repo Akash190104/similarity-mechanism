@@ -6,9 +6,9 @@ We add:
 - A **Similarity mechanism** with multiple ways to source and communicate similarity (fixed, sweep, benchmark-based, subjective)
 - A **benchmark system** for computing pairwise agent similarity from questionnaire responses
 - A **similarity elicitation** pipeline that measures how agent strategies shift as told similarity varies
-- Two new games: **Chicken** and **Battle of the Sexes**
+- A new game: **Chicken** (Hawk-Dove)
 
-Everything else — the game abstractions, other mechanisms (reputation, mediation, disarmament, contracting, repetition), evolutionary dynamics, agent wrappers — comes from the original Coop Eval framework.
+Everything else — the game abstractions, agent wrappers, and the other mechanisms and evaluation methods that ship with the framework but are not used here — comes from the original Coop Eval framework.
 
 ---
 
@@ -22,14 +22,15 @@ Everything else — the game abstractions, other mechanisms (reputation, mediati
   - [Example Configs](#example-configs)
 - [Benchmarks](#benchmarks)
 - [Similarity Elicitation](#similarity-elicitation)
-- [New Games](#new-games)
+- [New Game](#new-game)
 - [Scripts](#scripts)
 - [Configuration System](#configuration-system)
 - [Available Games](#available-games-srcgames)
-- [Available Mechanisms](#available-mechanisms-srcmechanisms)
+- [The Similarity Mechanism Class](#the-similarity-mechanism-class-srcmechanisms)
 - [Agent Wrappers](#agent-wrappers-srcagents)
-- [Evolution Loop](#evolution-loop)
+- [Concurrency Model](#concurrency-model)
 - [Repository Layout](#repository-layout)
+- [Output Format](#output-format)
 - [Running with Inspect AI](#running-with-inspect-ai)
 - [Contributing](#contributing)
 
@@ -167,24 +168,26 @@ kwargs:
 
 Benchmarks (`benchmarks/`) measure agent characteristics and compute pairwise similarity scores. Each benchmark implements `run(agent)` to collect responses and `compute_similarity(result_a, result_b)` to produce a 0-100% similarity score.
 
-| Key | Name | Format | Items | Similarity Metric |
-|-----|------|--------|-------|-------------------|
-| `newcomb` | Newcomb-like Decision Theory | MCQ (variable options, shuffled) | 537 | Raw answer agreement |
-| `gpqa` | GPQA Diamond | 4-option MCQ (shuffled) | 198 | Cohen's kappa |
-| `hle` | Humanity's Last Exam | MCQ or short free-text answer | 2,158 | Raw answer agreement |
-| `dilemmas` | Daily Dilemmas | Binary choice (shuffled) | 1,360 | Raw answer agreement |
-| `moral_choice` | MoralChoice | Binary choice (shuffled) | 1,367 | Raw answer agreement |
-| `multi_tp` | MultiTP Trolley Problems | Binary choice (shuffled) | 460 | Cohen's kappa |
-| `cabin` | CABIN Career Interest | 5-point Likert (Dislike → Like Very Much) | 164 | Quadratic Weighted Kappa |
-| `ggb` | Greatest Good Benchmark | 7-point Likert (Strongly Disagree → Strongly Agree) | 90 | Quadratic Weighted Kappa |
-| `trait` | TRAIT Personality | 4-option MCQ (shuffled) | 8,000 | Raw answer agreement |
-| `random_coin_toss` | Random Coin Toss | Comma-separated H/T sequence | 100 | Raw positional agreement |
-| `random_coin_toss_alt` | Random Coin Toss (alt phrasing) | Comma-separated H/T sequence | 100 | Raw positional agreement |
-| `random_die_roll` | Random Die Roll | Comma-separated 1–6 sequence | 100 | Raw positional agreement |
-| `random_die_roll_alt` | Random Die Roll (alt phrasing) | Comma-separated 1–6 sequence | 100 | Raw positional agreement |
-| `similarity_game` | Similarity Game | Mixed-strategy probability distributions | per config | Chance-corrected Jensen–Shannon divergence |
+| Key | Name | Format | Items | Similarity Metric | Used here |
+|-----|------|--------|-------|-------------------|-----------|
+| `newcomb` | Newcomb-like Decision Theory | MCQ (variable options, shuffled) | 537 | Raw answer agreement | **yes** |
+| `gpqa` | GPQA Diamond | 4-option MCQ (shuffled) | 198 | Cohen's kappa | — |
+| `hle` | Humanity's Last Exam | MCQ or short free-text answer | 2,158 | Raw answer agreement | **yes** |
+| `dilemmas` | Daily Dilemmas | Binary choice (shuffled) | 1,360 | Raw answer agreement | collected only |
+| `moral_choice` | MoralChoice | Binary choice (shuffled) | 1,367 | Raw answer agreement | **yes** |
+| `multi_tp` | MultiTP Trolley Problems | Binary choice (shuffled) | 460 | Cohen's kappa | — |
+| `cabin` | CABIN Career Interest | 5-point Likert (Dislike → Like Very Much) | 164 | Quadratic Weighted Kappa | collected only |
+| `ggb` | Greatest Good Benchmark | 7-point Likert (Strongly Disagree → Strongly Agree) | 90 | Quadratic Weighted Kappa | collected only |
+| `trait` | TRAIT Personality | 4-option MCQ (shuffled) | 8,000 | Raw answer agreement | **yes** |
+| `random_coin_toss` | Random Coin Toss | Comma-separated H/T sequence | 100 | Raw positional agreement | — |
+| `random_coin_toss_alt` | Random Coin Toss (alt phrasing) | Comma-separated H/T sequence | 100 | Raw positional agreement | — |
+| `random_die_roll` | Random Die Roll | Comma-separated 1–6 sequence | 100 | Raw positional agreement | — |
+| `random_die_roll_alt` | Random Die Roll (alt phrasing) | Comma-separated 1–6 sequence | 100 | Raw positional agreement | — |
+| `similarity_game` | Similarity Game | Mixed-strategy probability distributions | per config | Chance-corrected Jensen–Shannon divergence | collected only |
 
 Item counts are the full benchmark size; `max_items` subsamples them (see [Stratified Sampling](#stratified-sampling)).
+
+**Used here** records what this work actually ran. The four marked **yes** (`newcomb`, `trait`, `moral_choice`, `hle`) are the benchmarks behind the reported exogenous-similarity results; `cabin`, `ggb`, `dilemmas`, and `similarity_game` were collected but not carried into the game tournaments. The remainder are implemented and registered but were not run, so their metrics are untested in our setting — in particular **no reported result uses Cohen's kappa**.
 
 **What the metrics mean**
 
@@ -197,104 +200,7 @@ The LLM judge (`benchmarks/llm_judge.py`) is used for the *endogenous* similarit
 
 ### Stratified Sampling
 
-When `max_items` limits the number of questions (e.g., 100), benchmarks use **stratified sampling** (`benchmarks/sampling.py`) to select questions equally across subcategories rather than taking the first N. Within each subcategory, questions are randomly sampled using a deterministic seed (default 42) for reproducibility. If a benchmark has fewer total questions than `max_items`, all questions are used.
-
-#### Subcategories by Benchmark
-
-**TRAIT** — 8 traits (~1,000 questions each):
-| Trait |
-|-------|
-| Openness |
-| Conscientiousness |
-| Extraversion |
-| Agreeableness |
-| Neuroticism |
-| Machiavellianism |
-| Narcissism |
-| Psychopathy |
-
-**HLE** — 8 categories (~2,500 total):
-| Category |
-|----------|
-| Biology/Medicine |
-| Chemistry |
-| Computer Science/AI |
-| Engineering |
-| Humanities/Social Science |
-| Math |
-| Other |
-| Physics |
-
-**GPQA Diamond** — 13 subdomains (198 total):
-| Subdomain | Count |
-|-----------|-------|
-| Organic Chemistry | 72 |
-| Quantum Mechanics | 25 |
-| Chemistry (general) | 20 |
-| Physics (general) | 19 |
-| Molecular Biology | 15 |
-| High-energy particle physics | 14 |
-| Astrophysics | 13 |
-| Relativistic Mechanics | 7 |
-| Electromagnetism and Photonics | 6 |
-| Genetics | 4 |
-| Condensed Matter Physics | 1 |
-| Inorganic Chemistry | 1 |
-| Optics and Acoustics | 1 |
-
-**Daily Dilemmas** — 17 topic groups (80 dilemmas each, 1,360 total):
-| Topic Group |
-|-------------|
-| business_organization |
-| close_relationship |
-| comitted_relationship |
-| event_daily_life |
-| event_special |
-| family |
-| friend |
-| issue_crime_addiction |
-| issue_personal_career |
-| issue_pregnancy |
-| issue_self_image_social |
-| issue_wildlife_human_environment |
-| issue_young_people |
-| religion_custom |
-| role_duty_responsibility |
-| school |
-| workplace |
-
-**MoralChoice** — 2 ambiguity levels (1,367 total):
-| Ambiguity | Count |
-|-----------|-------|
-| high | ~680 |
-| low | ~687 |
-
-**MultiTP** — 6 moral dimensions (~680 generated scenarios):
-| Category | Subcategories |
-|----------|---------------|
-| Species | Animals vs Humans |
-| SocialValue | Low vs High |
-| Gender | Female vs Male |
-| Age | Young vs Old |
-| Fitness | Unfit vs Fit |
-| Utilitarianism | Less vs More |
-
-**Newcomb** — 2 question types (537 total):
-| Type | Count |
-|------|-------|
-| Attitude (decision theory alignment) | 130 |
-| Capability (factual understanding) | 407 |
-
-**CABIN** — 41 career interest categories (4 items each, 164 total):
-Mechanics/Electronics, Construction/WoodWork, Transportation/Machine Operation, Physical/Manual Labor, Protective Service, Agriculture, Nature/Outdoors, Animal Service, Athletics, Engineering, Physical Science, Life Science, Medical Science, Social Science, Humanities, Mathematics/Statistics, Information Technology, Visual Arts, Applied Arts and Design, Performing Arts, Music, Writing, Media, Culinary Art, Teaching/Education, Social Service, Health Care Service, Religious Activities, Personal Service, Professional Advising, Business Initiatives, Sales, Marketing/Advertising, Finance, Accounting, Human Resources, Office Work, Management/Administration, Public Speaking, Politics, Law
-
-**GGB** — 2 statement types (90 total):
-| Type | Count |
-|------|-------|
-| IH (Instrumental Harm) | 40 |
-| IB (Impartial Beneficence) | 50 |
-
-**Not stratified** (no subcategories): Random Coin Toss, Random Die Roll, Similarity Game.
+When `max_items` limits the number of questions (e.g., 100), benchmarks use **stratified sampling** (`benchmarks/sampling.py`) to select questions equally across subcategories rather than taking the first N. Within each subcategory, questions are randomly sampled using a deterministic seed (default 42) for reproducibility. If a benchmark has fewer total questions than `max_items`, all questions are used. Each benchmark's subcategories are defined in its module under `benchmarks/`.
 
 ### Running benchmarks
 
@@ -330,9 +236,9 @@ python script/run_similarity_tournament.py --config configs/main/similarity_test
 
 ---
 
-## New Games
+## New Game
 
-Two games were added to the Coop Eval framework for this work:
+One game was added to the Coop Eval framework for this work:
 
 ### Chicken (Hawk-Dove)
 
@@ -342,15 +248,6 @@ Two players simultaneously choose **Swerve** (safe) or **Dare**. If both dare, b
 |---|--------|------|
 | **Swerve** | 0, 0 | -1, 1 |
 | **Dare** | 1, -1 | -10, -10 |
-
-### Battle of the Sexes
-
-Two players coordinate on a shared activity with asymmetric preferences. Player 1 prefers Opera, Player 2 prefers Football, but both prefer coordination over miscoordination.
-
-| | Opera | Football |
-|---|-------|----------|
-| **Opera** | 3, 2 | 0, 0 |
-| **Football** | 0, 0 | 2, 3 |
 
 ---
 
@@ -387,7 +284,6 @@ python script/plot.py fixed_point outputs/.../fixed_point_results.json
 
 | Subcommand | What it plots |
 |------------|--------------|
-| `battle_of_the_sexes` | BoTS payoff, coordination, concession, joint-payoff lines + 2x2 dashboard |
 | `benchmark_sweep` | Per-model heatmaps of cooperation rate (benchmarks × similarity %) |
 | `combined_heatmap` | Merge several elicitation_sweep.json files into a similarity × model heatmap |
 | `cooperation_with_sem` | Cooperation rate vs similarity with SEM bands |
@@ -464,36 +360,11 @@ kwargs:
     DD: [1, 1]
 ```
 
-Add `ordinal_payoffs: true` to describe outcomes to agents as preference orderings ("the outcome you prefer the most") instead of point values, keeping the ranking but hiding the magnitudes. Supported by `PrisonersDilemma`, `StagHunt`, `Chicken`, `BattleOfTheSexes`, and `MatchingPennies`; see `configs/games/prisoners_dilemma_ordinal.yaml`.
+Add `ordinal_payoffs: true` to describe outcomes to agents as preference orderings ("the outcome you prefer the most") instead of point values, keeping the ranking but hiding the magnitudes. Supported by `PrisonersDilemma`, `StagHunt`, `Chicken`, and `MatchingPennies`; see `configs/games/prisoners_dilemma_ordinal.yaml`.
 
 ### Mechanism configs (`configs/mechanisms/`)
 
-See [The Similarity Mechanism](#the-similarity-mechanism) for similarity configs. Other mechanisms:
-
-```yaml
-# configs/mechanisms/repetition.yaml
-type: Repetition
-kwargs:
-  num_rounds: 15
-  discount: 0.8
-  lookup_depth: 3
-```
-
-### Evaluation configs (`configs/evaluation/`)
-
-```yaml
-# configs/evaluation/default_evaluation.yaml
-methods:
-  - type: evolutionary_dynamics
-    kwargs:
-      initial_population: uniform
-      steps: 1000
-      lr_method: constant
-      lr_nu: 0.1
-  - type: deviation_rating
-    kwargs:
-      tolerance: 1.0e-14
-```
+See [The Similarity Mechanism](#the-similarity-mechanism) for the similarity configs used in this work.
 
 ---
 
@@ -507,23 +378,17 @@ methods:
 | `TrustGame` | Two-player simultaneous trust game (invest vs. keep) | Coop Eval |
 | `StagHunt` | Two-player stag hunt coordination game | Coop Eval |
 | `MatchingPennies` | Two-player zero-sum matching pennies game | Coop Eval |
-| `BattleOfTheSexes` | Two-player coordination game with asymmetric preferences | **New** |
 | `Chicken` | Two-player game of chicken (hawk-dove) | **New** |
 
 ---
 
-## Available Mechanisms (`src/mechanisms/`)
+## The Similarity Mechanism Class (`src/mechanisms/`)
 
-| Class | Config `type` | Purpose | Origin |
-|-------|---------------|---------|--------|
-| `NoMechanism` | `NoMechanism` | Single-shot game (baseline) | Coop Eval |
-| `Repetition` | `Repetition` | Repeats the base game for fixed rounds with optional history prompt | Coop Eval |
-| `Disarmament` | `Disarmament` | Negotiation of per-action probability caps before each round | Coop Eval |
-| `Mediation` | `Mediation` | Agents may delegate to a learned mediator design | Coop Eval |
-| `Contracting` | `Contracting` | Agents propose/agree to payoff-altering contracts | Coop Eval |
-| `Reputation` | `Reputation` | Tracks cooperation rates and exposes them as public info | Coop Eval |
-| `ReputationFirstOrder` | `ReputationFirstOrder` | Registry alias for the same `Reputation` class, conventionally configured with `max_recursion_depth: 1` and `include_prior_distributions: false` (reported as "Reputation−" vs. "Reputation+") | Coop Eval |
-| `Similarity` | `Similarity` | Tells agents about opponent similarity; multiple sources and framings | **New** |
+| Class | Config `type` | Purpose |
+|-------|---------------|---------|
+| `Similarity` | `Similarity` | Tells agents about opponent similarity; multiple sources and framings |
+
+Coop Eval's other mechanisms (reputation, mediation, disarmament, contracting, repetition) remain in the tree and are documented upstream; they are not used in this work.
 
 ---
 
@@ -534,16 +399,6 @@ methods:
 - Backends provided by `LLMManager`:
   - `HFInstance` (local Hugging Face checkpoints, with automatic device placement).
   - `ClientAPILLM` (OpenAI-compatible API clients: OpenAI, Gemini, OpenRouter). Configure API keys in `config.py` / environment variables.
-
----
-
-## Evolution Loop
-
-1. **Tournament**: The active mechanism runs all required matchups, producing payoff tables.
-2. **Fitness**: The payoff table calculates expected payoffs for the current population distribution.
-3. **Update**: `DiscreteReplicatorDynamics` applies an exponential-weight update and normalises the distribution.
-
-The process repeats for `steps` iterations or until convergence.
 
 ---
 
@@ -568,7 +423,7 @@ The process repeats for `steps` iterations or until convergence.
 │   ├── games/               # Game payoff matrices
 │   ├── main/                # Top-level experiment configs
 │   ├── mechanisms/          # Mechanism parameters
-│   └── evaluation/          # Evolutionary dynamics settings
+│   └── evaluation/          # Evaluation settings (unused in this work)
 ├── script/
 │   ├── run_experiment.py    # Main entry point
 │   ├── run_similarity_sweep.py
@@ -591,7 +446,7 @@ The process repeats for `steps` iterations or until convergence.
 │   └── plotting/            # Extract data from Inspect logs for plots
 ├── src/
 │   ├── agents/              # Agent abstractions & LLM backends
-│   ├── games/               # Game definitions (+ chicken.py, battle_of_the_sexes.py)
+│   ├── games/               # Game definitions (+ chicken.py)
 │   ├── mechanisms/          # Incentive layers (+ similarity.py, similarity_elicitation.py, subjective_similarity.py)
 │   ├── llm_judge/           # Cooperation-taxonomy classifier (judge, taxonomy, processors)
 │   ├── registry/            # Game, mechanism, agent registries
@@ -615,8 +470,6 @@ Each experiment run produces a timestamped directory under `outputs/<year>/<mont
 | `config.json` | The effective configuration used for this run |
 | `matchup_payoffs.json` | Aggregated payoff table by agent matchup |
 | `agent_average_payoff.json` | Average payoffs per agent |
-| `population_history.json` | Evolutionary dynamics trajectory |
-| `deviation_ratings.json` | Convergence check results |
 | `benchmark_results_*.json` | Per-benchmark raw results (if benchmarks were run) |
 | `similarity_computation.json` | Pairwise similarity scores (if tournament mode) |
 
@@ -634,7 +487,7 @@ uv pip install inspect-ai
 
 ### Running experiments
 
-**Tournament** (any game + any mechanism):
+**Tournament**:
 ```bash
 # Prisoner's Dilemma with similarity sweep
 inspect eval inspect_similarity/tasks/tournament.py \
@@ -644,10 +497,11 @@ inspect eval inspect_similarity/tasks/tournament.py \
     -T agents_config=agents/cheap_llms_3.yaml \
     -T seed=42
 
-# Any other mechanism (NoMechanism, Reputation, Repetition, etc.)
+# Another game, fixed similarity instead of a sweep
 inspect eval inspect_similarity/tasks/tournament.py \
     -T game=StagHunt \
-    -T mechanism=NoMechanism \
+    -T mechanism=Similarity \
+    -T mechanism_kwargs='{"similarity_source":"fixed","similarity_pct":70}' \
     -T agents_config=agents/two_models.yaml \
     -T seed=42
 ```
@@ -745,7 +599,11 @@ inspect_similarity/
 
 ## Contributing
 
-- **Add a new game**: create a class in `src/games/`, register it in `src/registry/game_registry.py`.
-- **Add a mechanism**: subclass `Mechanism`, implement `_play_matchup`, register in `src/registry/mechanism_registry.py`.
-- **Add a benchmark**: subclass `Benchmark` in `benchmarks/`, implement `run()` and `compute_similarity()`, register in `benchmarks/registry.py`.
-- **Add agent types**: subclass `Agent`, implement `chat`, register in `src/registry/agent_registry.py`.
+This repository is focused on the similarity mechanism, so the most useful contributions are ones that extend it:
+
+- **Add a benchmark** — the main lever for exogenous similarity. Subclass `Benchmark` in `benchmarks/`, implement `run()` and `compute_similarity()`, and register it in `benchmarks/registry.py`. A benchmark is only as useful as its similarity metric, so state plainly what `compute_similarity` returns and whether it is chance-corrected.
+- **Add a similarity framing** — a new `prompt_mode` in `src/mechanisms/prompts.py`, dispatched from `similarity_utils.py`. Please add the exact wording to [`SIMILARITY_PROMPTS_V2.md`](SIMILARITY_PROMPTS_V2.md) in the same format as the existing entries, since that file is the reference for what agents actually saw.
+- **Add a similarity source** — a new `similarity_source` branch in `src/mechanisms/similarity.py`, for a different way of deriving the number the agents are told.
+- **Report a result that does not replicate** — cooperation under similarity framing is sensitive to model, payoff scale, and prompt wording. Runs that disagree with ours are useful; please include the config and the model versions.
+
+If instead you have a **new game or a new mechanism** that is not specific to similarity, it belongs upstream in [Coop Eval](https://github.com/Akash190104/CoopEval) rather than here — that is where the game abstractions, the mechanism interface, and the other mechanisms live, and a contribution there benefits every mechanism built on top of it, this one included.
